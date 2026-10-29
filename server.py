@@ -69,7 +69,6 @@ def validate():
         return jsonify({"status": "mismatch", "msg": "Key locked to another PC"})
         
     else:
-        # Update user activity
         c.execute("SELECT * FROM users WHERE hwid=?", (hwid,))
         if c.fetchone():
             c.execute("UPDATE users SET last_seen=?, pc_name=? WHERE hwid=?", (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), pc_name, hwid))
@@ -78,6 +77,21 @@ def validate():
         conn.commit()
         conn.close()
         return jsonify({"status": "success", "msg": "Access Granted"})
+
+@app.route('/api/key_from_hwid', methods=['POST'])
+def key_from_hwid():
+    data = request.json
+    hwid = data.get('hwid', '')
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT key FROM keys WHERE hwid=? AND banned=0", (hwid,))
+    row = c.fetchone()
+    conn.close()
+    
+    if row:
+        return jsonify({"status": "success", "key": row[0]})
+    return jsonify({"status": "not_found"})
 
 # --- OWNER ROUTES ---
 @app.route('/owner/reset_hwid', methods=['POST'])
@@ -128,5 +142,4 @@ def gen_key():
     return jsonify({"status": "success", "key": new_key, "expiry": expiry})
 
 if __name__ == '__main__':
-    print("API Server Running on port 5000...")
     app.run(host='0.0.0.0', port=5000)
