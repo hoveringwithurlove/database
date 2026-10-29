@@ -141,5 +141,9 @@ def gen_key():
     conn.close()
     return jsonify({"status": "success", "key": new_key, "expiry": expiry})
 
+@app.route('/test_route_xyz', methods=['GET'])
+def test_route():
+    return "HELLO WORLD", 200
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
